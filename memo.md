@@ -73,3 +73,6 @@ workflows:
 ``` 
 
 ## LintingとPrettierの設定
+
+
+## Redux
