@@ -1,0 +1,75 @@
+# Build a Modern React and Redux App with CircleCI CI/CD & AWSに関するメモ
+
+## circleciとherokuへのデプロイ
+ファイルProcfileを作成
+```
+web: node server.js
+```
+
+.circleciフォルダのconfig.ymlファイルを作成。
+* 二つのjob（buildとdeploy-to-heroku)を作成
+* 
+
+```yml
+version: 2.1
+ 
+jobs:
+  build:
+    docker:
+      - image: circleci/node:13.12.0
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - run:
+          name: Show current branch
+          command: echo ${CIRCLE_BRANCH}
+      - restore_cache:
+          keys:
+            - app-{‌{ checksum "package.json" }}
+            - app-
+      - run:
+          name: Install dependencies
+          command: npm install
+      - save_cache:
+          paths:
+            - node_modules
+          key: app-{‌{ checksum "package.json" }}
+ 
+  deploy-to-heroku:
+    docker:
+      - image: circleci/node:13.12.0
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - run:
+          name: Show current branch
+          command: echo ${CIRCLE_BRANCH}
+      - run:
+          name: Deploy to Heroku
+          command: |
+            if [ "${CIRCLE_BRANCH}" == "master" ]
+            then
+              git push https://heroku:$HEROKU_API_KEY@git.heroku.com/cinema-production.git ${CIRCLE_BRANCH}:master -f
+            elif [ "${CIRCLE_BRANCH}" == "staging" ]
+            then
+              git push https://heroku:$HEROKU_API_KEY@git.heroku.com/cinema-staging.git ${CIRCLE_BRANCH}:master -f
+            else
+              git push https://heroku:$HEROKU_API_KEY@git.heroku.com/cinema-dev.git ${CIRCLE_BRANCH}:master -f
+            fi
+            
+workflows:
+  build_and_deploy:
+    jobs:
+      - build
+      - deploy-to-heroku:
+          requires:
+            - build
+          filters:
+            branches:
+              only:
+                - develop
+                - staging
+                - master
+``` 
+
+## LintingとPrettierの設定
