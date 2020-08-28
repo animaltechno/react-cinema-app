@@ -1,63 +1,92 @@
-import React , { useState } from 'react'
+import React , { useState, useEffect } from 'react';
+import {connect} from 'react-redux';
 import './MainContent.scss'
 import Slideshow from '../slide-show/Slideshow'
 import Paginate from '../paginate/Paginate';
 import Grid from '../grid/Grid';
+import { IMAGE_URL } from '../../../services/movies.service';
+import { getMovies, setResponseNumber } from '../../../redux/actions/movie';
 
-const MainContent = () => {
-  const images = [
-    {url: "https://images.unsplash.com/photo-1516717100004-8b2682dd9759?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=700&q=80", 
-    rating: 7.4}, 
-    {url: "https://images.unsplash.com/photo-1584660704707-c9aab18f7bad?ixlib=rb-1.2.1&auto=format&fit=crop&w=634&q=80", 
-    rating: 9.1}, 
-    {url: "https://images.unsplash.com/photo-1452806723698-a8daf14aa079?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=698&q=80", 
-    rating: 6.9},
-    {url: "https://images.unsplash.com/photo-1567618722705-1437d282f887?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60", 
-    rating: 8.5}, 
-    {url: "https://images.unsplash.com/photo-1572036798084-d9d7dc3b57c8?ixlib=rb-1.2.1&auto=format&fit=crop&w=530&q=80", 
-    rating: 6.6}, 
-    {url: "https://images.unsplash.com/photo-1589371954131-6b7959649541?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60", 
-    rating: 8.9}, 
-    {url: "https://images.unsplash.com/photo-1546497996-d3f9e43bf9f4?ixlib=rb-1.2.1&auto=format&fit=crop&w=634&q=80", 
-    rating: 9.0},
-    {url: "https://images.unsplash.com/flagged/photo-1577907596406-01fe0b42fe5d?ixlib=rb-1.2.1&auto=format&fit=crop&w=675&q=80", 
-    rating: 4.2},
-    {url: "https://images.unsplash.com/photo-1561290022-baa0cda78dbd?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80", 
-    rating: 7.1},
-    {url: "https://images.unsplash.com/photo-1577953206384-7d40f0f03854?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80", 
-    rating: 3.2},
-    {url: "https://images.unsplash.com/photo-1567618937163-df4ffbf831ff?ixlib=rb-1.2.1&auto=format&fit=crop&w=675&q=80", 
-    rating: 9.8},
-    {url: "https://images.unsplash.com/photo-1590866715341-8eec3483b89c?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80", 
-    rating: 8.1},
-    {url: "https://images.unsplash.com/photo-1595506285505-b51050acdaa1?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80", 
-    rating: 4.0}
-  ];
+const MainContent = (props) => {
+  const { list, movieType, totalPages, page, getMovies, setResponseNumber } = props;
+  const [currentPage, setCurrentPage ] = useState(page);
+  const [images, setImages] = useState([]);
+  const randomMovies = list.sort(() => Math.random() - Math.random()).slice(0, 4);
 
-  const [currentPage, setCurrentPage ] = useState(1);
+  const HEADER_TYPE = {
+    now_playing: "Now Playing", 
+    popular : "Popular", 
+    top_rated: "Top Rated", 
+    upcoming: "Upcoming"
+  };
+
+  useEffect(() => {
+    if(randomMovies.length) {
+      const IMAGES = [
+        {
+          id: 1, 
+          url: `${IMAGE_URL}/${randomMovies[0].backdrop_path}`
+        }, 
+        {
+          id: 2, 
+          url: `${IMAGE_URL}/${randomMovies[1].backdrop_path}`
+        }, 
+        {
+          id: 3, 
+          url: `${IMAGE_URL}/${randomMovies[2].backdrop_path}`
+        }, 
+        {
+          id: 4, 
+          url: `${IMAGE_URL}/${randomMovies[3].backdrop_path}`
+        }
+      ];
+      setImages(IMAGES);
+    }
+    // eslint-disable-next-line
+  }, []);
+
+  useEffect(() => {
+    setCurrentPage(page); 
+    // eslint-disable-next-line
+  }, [page, totalPages]);
+
 
   const paginate = (type) => {
+    let pageNumber = currentPage;
+
     if(type === 'prev' && currentPage >= 1 ) {
-      setCurrentPage((prev) => prev -1);
+      pageNumber -= 1;
     } else {
-      setCurrentPage((prev) => prev + 1);
+      pageNumber += 1;
     }
+    setCurrentPage(pageNumber);
+    setResponseNumber(pageNumber, totalPages);
+    getMovies(movieType, pageNumber);
   }
 
   return (
     <div className="main-content">
       <Slideshow images={images} auto={true} showArrows={true}/>
       <div className="grid-movie-title">
-        <div className="movie-type">Now Playing</div>
+        <div className="movie-type">{HEADER_TYPE[movieType]}</div>
         <div className="paginate">
-          <Paginate currentPage={currentPage} totalPages={10} paginate={paginate} />
+          <Paginate currentPage={currentPage} totalPages={totalPages} paginate={paginate} />
         </div>
       </div>
-      <Grid images={images} />
-
-
+      <Grid />
     </div>
   )
-}
+};
 
-export default MainContent
+
+const mapStateToProps = ( state ) => ({
+  list: state.movies.list,
+  movieType: state.movies.movieType, 
+  totalPages: state.movies.totalPages,
+  page: state.movies.page
+});
+
+export default connect(
+  mapStateToProps, 
+  { getMovies, setResponseNumber }
+)(MainContent)
