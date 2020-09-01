@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 
 import './Header.scss';
 import logo from '../../assets/cinema-logo.svg'
-import { getMovies, setMovieType, setResponseNumber } from '../../redux/actions/movie';
+import { getMovies, setMovieType, setResponseNumber, searchQuery, searchResult } from '../../redux/actions/movie';
 
 const HEADER_LIST = [
   { id: 1, iconClass: 'fas fa-film', name: 'Now Playing', type: 'now_playing'}, 
@@ -13,11 +13,12 @@ const HEADER_LIST = [
 ];
 
 const Header = (props) => {
-  const { getMovies, setMovieType, page, totalPages, setResponseNumber} = props;
+  const { getMovies, setMovieType, page, totalPages, setResponseNumber, searchQuery, searchResult } = props;
 
   let [menuClass, setMenuClass] = useState(false);
   let [navClass, setNavClass] = useState(false);
   const [type, setType] = useState("now_playing");
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     getMovies(type, page);
@@ -45,6 +46,13 @@ const Header = (props) => {
       document.body.classList.remove('header-nav-open')
     };
   }
+
+  const onSearchChange = (e) => {
+    setSearch(e.target.value);
+    searchQuery(e.target.value);
+    searchResult(e.target.value);
+  };
+
   return (
     <>
       <div className="header-nav-wrapper">
@@ -81,7 +89,10 @@ const Header = (props) => {
               <input 
                 type="text"
                 className="search-input"
-                placeholder="search for a movie"/>
+                placeholder="search for a movie"
+                value={search}
+                onChange={onSearchChange}
+              />
             </ul>
           </div>
         </div>
@@ -93,9 +104,10 @@ const Header = (props) => {
 const mapStateToProps = ( state ) => ({
   list: state.movies.list, 
   page: state.movies.page, 
-  totalPages: state.movies.totalPages
+  totalPages: state.movies.totalPages,
+  
 });
 
 export default connect(
-  mapStateToProps, { getMovies, setMovieType, setResponseNumber }
+  mapStateToProps, { getMovies, setMovieType, setResponseNumber, searchQuery, searchResult  }
 )(Header);
