@@ -1,39 +1,92 @@
-import React , { useState } from 'react'
+import React , { useState, useEffect } from 'react';
+import {connect} from 'react-redux';
 import './MainContent.scss'
 import Slideshow from '../slide-show/Slideshow'
 import Paginate from '../paginate/Paginate';
+import Grid from '../grid/Grid';
+import { IMAGE_URL } from '../../../services/movies.service';
+import { getMovies, setResponseNumber } from '../../../redux/actions/movie';
 
-const MainContent = () => {
-  const images = [
-    {url: "https://images.unsplash.com/photo-1516717100004-8b2682dd9759?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=700&q=80"}, 
-    {url: "https://images.unsplash.com/photo-1584660704707-c9aab18f7bad?ixlib=rb-1.2.1&auto=format&fit=crop&w=634&q=80"}, 
-    {url: "https://images.unsplash.com/photo-1452806723698-a8daf14aa079?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=698&q=80"}
-  ];
+const MainContent = (props) => {
+  const { list, movieType, totalPages, page, getMovies, setResponseNumber } = props;
+  const [currentPage, setCurrentPage ] = useState(page);
+  const [images, setImages] = useState([]);
+  const randomMovies = list.sort(() => Math.random() - Math.random()).slice(0, 4);
 
-  const [currentPage, setCurrentPage ] = useState(1);
+  const HEADER_TYPE = {
+    now_playing: "Now Playing", 
+    popular : "Popular", 
+    top_rated: "Top Rated", 
+    upcoming: "Upcoming"
+  };
+
+  useEffect(() => {
+    if(randomMovies.length) {
+      const IMAGES = [
+        {
+          id: 1, 
+          url: `${IMAGE_URL}/${randomMovies[0].backdrop_path}`
+        }, 
+        {
+          id: 2, 
+          url: `${IMAGE_URL}/${randomMovies[1].backdrop_path}`
+        }, 
+        {
+          id: 3, 
+          url: `${IMAGE_URL}/${randomMovies[2].backdrop_path}`
+        }, 
+        {
+          id: 4, 
+          url: `${IMAGE_URL}/${randomMovies[3].backdrop_path}`
+        }
+      ];
+      setImages(IMAGES);
+    }
+    // eslint-disable-next-line
+  }, []);
+
+  useEffect(() => {
+    setCurrentPage(page); 
+    // eslint-disable-next-line
+  }, [page, totalPages]);
+
 
   const paginate = (type) => {
+    let pageNumber = currentPage;
+
     if(type === 'prev' && currentPage >= 1 ) {
-      setCurrentPage((prev) => prev -1);
+      pageNumber -= 1;
     } else {
-      setCurrentPage((prev) => prev + 1);
+      pageNumber += 1;
     }
+    setCurrentPage(pageNumber);
+    setResponseNumber(pageNumber, totalPages);
+    getMovies(movieType, pageNumber);
   }
 
   return (
     <div className="main-content">
       <Slideshow images={images} auto={true} showArrows={true}/>
       <div className="grid-movie-title">
-        <div className="movie-type">Now Playing</div>
+        <div className="movie-type">{HEADER_TYPE[movieType]}</div>
         <div className="paginate">
-          <Paginate currentPage={currentPage} totalPages={10} paginate={paginate} />
+          <Paginate currentPage={currentPage} totalPages={totalPages} paginate={paginate} />
         </div>
       </div>
-
-      {/* display grid component */}
-
+      <Grid />
     </div>
   )
-}
+};
 
-export default MainContent
+
+const mapStateToProps = ( state ) => ({
+  list: state.movies.list,
+  movieType: state.movies.movieType, 
+  totalPages: state.movies.totalPages,
+  page: state.movies.page
+});
+
+export default connect(
+  mapStateToProps, 
+  { getMovies, setResponseNumber }
+)(MainContent)
