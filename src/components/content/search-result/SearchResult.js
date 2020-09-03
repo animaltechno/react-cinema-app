@@ -1,4 +1,5 @@
 import React, { useState, useEffect, Fragment } from 'react';
+import { Link } from 'react-router-dom';
 import '../grid/Grid.scss';
 import './SearchResult';
 import Rating from '../rating/Rating';
@@ -11,6 +12,11 @@ import LazyImage from '../../lazy-image/LazyImage';
 const SearchResult = (props) => {
   const { searchQuery, searchResult } = props;
   const [movieData, setMovieData] = useState([]);
+
+  const formatMovieTitle = (title) => {
+    const titleStr = title.toLowerCase();
+    return titleStr.replace(/ /g, '-')
+  }
 
   useEffect(() => {
     setMovieData(searchResult)
@@ -34,7 +40,7 @@ const SearchResult = (props) => {
                   >
                   <div className="grid-read-more">
                     <button className="grid-cell-button">
-                      Read More
+                      <Link to={`/${data.id}/${formatMovieTitle(data.title)}/details`}>Read More</Link>
                     </button>
                   </div>
                   <div className="grid-detail">

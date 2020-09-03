@@ -7,16 +7,21 @@ const Rating = ({ rating, totalStars, className }) => {
 
   useEffect(()=> {
     setNumberOfStars([...Array(totalStars).keys()].map(i => i+1));
+
     let percentage;
+
     if (rating <= 5) {
       percentage = (rating / 10) * 100;
     } else {
       percentage = (rating / 10) * 100;
-    }
+    };
 
     const satrPercentage = `${Math.floor(percentage)}%`;
+    
     ratingRef.current.style.width = satrPercentage;
-  },[rating, totalStars])
+  },[rating, totalStars]);
+
+
   return (
     <div className="star-rating"> 
       <div className={`back-stars ${className}`}>
