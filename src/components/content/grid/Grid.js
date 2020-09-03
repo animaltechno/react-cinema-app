@@ -5,6 +5,7 @@ import { connect } from 'react-redux';
 import { v4 as uuidv4} from 'uuid';
 import { IMAGE_URL } from '../../../services/movies.service'
 import LazyImage from '../../lazy-image/LazyImage';
+import { Link } from 'react-router-dom';
 
 
 const Grid = (props) => {
@@ -14,6 +15,11 @@ const Grid = (props) => {
   useEffect(() => {
     setMovieData(list)
   }, [list]);
+
+  const formatMovieTitle = (title) => {
+    const titleStr = title.toLowerCase();
+    return titleStr.replace(/ /g, '-')
+  }
 
   return (
     <>
@@ -28,7 +34,7 @@ const Grid = (props) => {
                 >
                 <div className="grid-read-more">
                   <button className="grid-cell-button">
-                    Read More
+                    <Link to={`/${data.id}/${formatMovieTitle(data.title)}/details`}>Read More</Link>
                   </button>
                 </div>
                 <div className="grid-detail">
