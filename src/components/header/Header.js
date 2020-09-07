@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { connect } from 'react-redux';
-import { useHistory } from 'react-router-dom';
+import { useHistory, useLocation } from 'react-router-dom';
 
 import './Header.scss';
 import logo from '../../assets/cinema-logo.svg'
-import { getMovies, setMovieType, setResponseNumber, searchQuery, searchResult } from '../../redux/actions/movie';
+import { getMovies, setMovieType, setResponseNumber, searchQuery, searchResult, clearMovieDetails } from '../../redux/actions/movie';
 
 const HEADER_LIST = [
   { id: 1, iconClass: 'fas fa-film', name: 'Now Playing', type: 'now_playing'}, 
@@ -14,24 +14,40 @@ const HEADER_LIST = [
 ];
 
 const Header = (props) => {
-  const { getMovies, setMovieType, page, totalPages, setResponseNumber, searchQuery, searchResult } = props;
+  const { getMovies, setMovieType, page, totalPages, setResponseNumber, searchQuery, searchResult, clearMovieDetails } = props;
 
   let [menuClass, setMenuClass] = useState(false);
   let [navClass, setNavClass] = useState(false);
   const [type, setType] = useState("now_playing");
   const [search, setSearch] = useState("");
+  const [disableSearch, setDisableSearch] = useState(false);
 
   const history = useHistory();
+  const location = useLocation();
 
   useEffect(() => {
     getMovies(type, page);
     setResponseNumber(page, totalPages);
+
+    // 個別のmovieページではヘッダーの検索画面が消える
+    if(location.pathname !== '/' && location.key ) {
+      setDisableSearch(true);
+    }
+
     // eslint-disable-next-line
-  }, [type]);
+  }, [type, disableSearch, location]);
 
   const setMovieTypeUrl = (type) => {
-    setType(type);
-    setMovieType(type);
+    setDisableSearch(false);
+    if (location.pathname !== '/') {
+      clearMovieDetails();
+      history.push('/');
+      setType(type);
+      setMovieType(type)
+    } else {
+      setType(type);
+      setMovieType(type);
+    }
   }
 
   const toggleMenu = () => {
@@ -57,7 +73,9 @@ const Header = (props) => {
   };
 
   const navigateToMainPage = () => {
-    history.push('/')
+    setDisableSearch(false);
+    clearMovieDetails();
+    history.push('/');
   }
 
   return (
@@ -95,7 +113,7 @@ const Header = (props) => {
               }
               <input 
                 type="text"
-                className="search-input"
+                className={`search-input ${disableSearch ? 'disabled' : ''}`}
                 placeholder="search for a movie"
                 value={search}
                 onChange={onSearchChange}
@@ -112,9 +130,9 @@ const mapStateToProps = ( state ) => ({
   list: state.movies.list, 
   page: state.movies.page, 
   totalPages: state.movies.totalPages,
-  
+  movie: state.movies.movie
 });
 
 export default connect(
-  mapStateToProps, { getMovies, setMovieType, setResponseNumber, searchQuery, searchResult  }
+  mapStateToProps, { getMovies, setMovieType, setResponseNumber, searchQuery, searchResult, clearMovieDetails  }
 )(Header);
