@@ -1,4 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState} from 'react';
+import { connect } from 'react-redux';
+import { useParams } from 'react-router-dom';
+
 
 import Rating from '../rating/Rating';
 import './Details.scss';
@@ -7,63 +10,89 @@ import Overview from './overview/Overview';
 import Crew from './crew/Crew';
 import Media from './media/Media';
 import Reviews from './reviews/Reviews';
+import { movieDetails } from '../../../redux/actions/movie';
+import { IMAGE_URL } from '../../../services/movies.service';
 
-const Details = () => {
+
+const Details = (props) => {
+  const { movieDetails, movie } = props;
+  const [details, setDetails] = useState();
+  const { id } = useParams();
+  
+  useEffect(()=>{
+    if (movie.length === 0) {
+      movieDetails(id);
+    }
+    setDetails(movie[0]);
+  }, [id, movie]);
+
   return (
     <>
-      <div className="movie-container">
-        <div 
-          className="movie-bg"
-          style={{ backgroundImage: `url(https://images.pexels.com/photos/65437/pexels-photo-65437.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260)`}}  
-        >
-        </div>
-        <div className="movie-overlay"></div>
-        <div className="movie-details">
-          <div className="movie-image">
-            <img src="https://images.pexels.com/photos/65437/pexels-photo-65437.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260" alt=""/>
+    {
+      details && 
+        <div className="movie-container">
+          <div 
+            className="movie-bg"
+            style={{ backgroundImage: `url(${IMAGE_URL}${details.backdrop_path})`}}  
+          >
           </div>
-          <div className="movie-body">
-            <div className="movie-overview">
-              <div className="title">
-                Mission Impossible <span>2020-09-01</span>
+          <div className="movie-overlay"></div>
+          <div className="movie-details">
+            <div className="movie-image">
+              <img src={`${IMAGE_URL}${details.poster_path}`} alt=""/>
+            </div>
+            <div className="movie-body">
+              <div className="movie-overview">
+                <div className="title">
+                  {details.title} <span>{details.release_date}</span>
+                </div>
+                <div className="movie-genres">
+                  <ul className="genres">
+                    {
+                      details.genres.map(detail => (
+                        <li key={detail.id}>{detail.name} </li>)
+                      )
+                    }
+                  </ul>
+                </div>
+                <div className="rating">
+                  <Rating 
+                    className="rating-stars"
+                    rating={details.vote_average}
+                    totalStars={10}
+                  />
+                  &nbsp;
+                  <span>{details.vote_average}</span>
+                  <p>({details.vote_count}) reviews</p>
+                </div>
+                <Tabs>
+                  <div label="Overview">
+                    <Overview />
+                  </div>
+                  <div label="Crew">
+                    <Crew />
+                  </div>
+                  <div label="Media">
+                    <Media />
+                  </div>
+                  <div label="Reviews">
+                    <Reviews />
+                  </div>
+                </Tabs>
               </div>
-              <div className="movie-genres">
-                <ul className="genres">
-                  <li>Action</li>
-                  <li>Commedy</li>
-                  <li>Sci-fi</li>
-                </ul>
-              </div>
-              <div className="rating">
-                <Rating 
-                  className="rating-stars"
-                  rating={6.5}
-                  totalStars={10}
-                />
-                &nbsp;
-                <span>6.7</span>
-                <p>(200) reviews</p>
-              </div>
-              <Tabs>
-                <div label="Overview">
-                  <Overview />
-                </div>
-                <div label="Crew">
-                  <Crew />
-                </div>
-                <div label="Media">
-                  <Media />
-                </div>
-                <div label="Reviews">
-                  <Reviews />
-                </div>
-              </Tabs>
             </div>
           </div>
         </div>
-      </div>
+    }
     </>
   )
 }
 
-export default Details
+const mapStateToProps = (state) => ({
+  movie: state.movies.movie
+})
+
+export default connect(
+  mapStateToProps, 
+  { movieDetails }
+)(Details);
