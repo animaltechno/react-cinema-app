@@ -1,0 +1,87 @@
+orbs: 
+  slack: circleci/slack@3.4.2
+version: 2.1
+executors:
+  app-executor:
+    docker:
+      - image: circleci/node:13.12.0
+    working_directory: ~/repo
+  slack-executor:
+    docker:
+      - image: 'cibuilds/base:latest'
+    resource_class: small
+ 
+jobs:
+  build:
+    docker:
+      - image: circleci/node:13.12.0
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - run:
+          name: Show current branch
+          command: echo ${CIRCLE_BRANCH}
+      - restore_cache:
+          keys:
+            - app-{‌{ checksum "package.json" }}
+            - app-
+      - run:
+          name: Install dependencies
+          command: npm install
+      - save_cache:
+          paths:
+            - node_modules
+          key: app-{‌{ checksum "package.json" }}
+ 
+  deploy-to-heroku:
+    docker:
+      - image: circleci/node:13.12.0
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - run:
+          name: Show current branch
+          command: echo ${CIRCLE_BRANCH}
+      - run:
+          name: Deploy to Heroku
+          command: |
+            if [ "${CIRCLE_BRANCH}" == "master" ]
+            then
+              git push https://heroku:$HEROKU_API_KEY@git.heroku.com/cinema-production.git ${CIRCLE_BRANCH}:master -f
+            elif [ "${CIRCLE_BRANCH}" == "staging" ]
+            then
+              git push https://heroku:$HEROKU_API_KEY@git.heroku.com/cinema-staging.git ${CIRCLE_BRANCH}:master -f
+            else
+              git push https://heroku:$HEROKU_API_KEY@git.heroku.com/cinema-dev.git ${CIRCLE_BRANCH}:master -f
+            fi
+  notify-via-slack:
+    executor: slack-executor
+    steps: 
+      - slack/notify: 
+          message: "${CIRCLE_BRANCH} branch deployment to heroku is completed"
+          webhook: $SLACK_WEBHOOK
+      - slack/status: 
+          webhook: $SLACK_WEBHOOK
+            
+workflows:
+  build_and_deploy:
+    jobs:
+      - build
+      - deploy-to-heroku:
+          requires:
+            - build
+          filters:
+            branches:
+              only:
+                - develop
+                - staging
+                - master
+      - notify-via-slack:
+          requires: 
+            - deploy-to-heroku
+          filters:
+            branches: 
+              only:
+                - develop
+                - staging
+                - master
