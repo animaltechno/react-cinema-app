@@ -10,7 +10,7 @@ executors:
     docker:
       - image: 'cibuilds/base:latest'
     resource_class: small
-
+# aliasesの追加
 aliases:
   - &show-current-branch-name
     run:
