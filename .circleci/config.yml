@@ -33,6 +33,16 @@ jobs:
             - node_modules
           key: app-{‌{ checksum "package.json" }}
  
+  unit-test:
+    executor: app-executor
+    steps: 
+      - checkout 
+      # - *Show-current-branch
+      # - *restore-cache
+      - run: 
+          name: Run unit test
+          command: npm run test
+
   deploy-to-heroku:
     docker:
       - image: circleci/node:13.12.0
@@ -54,6 +64,7 @@ jobs:
             else
               git push https://heroku:$HEROKU_API_KEY@git.heroku.com/cinema-dev.git ${CIRCLE_BRANCH}:master -f
             fi
+            
   notify-via-slack:
     executor: slack-executor
     steps: 
@@ -67,9 +78,18 @@ workflows:
   build_and_deploy:
     jobs:
       - build
-      - deploy-to-heroku:
+      - unit-test:
           requires:
             - build
+          filters: 
+            branches: 
+              only: 
+                - develop
+                - staging
+                - master
+      - deploy-to-heroku:
+          requires:
+            - unit-test
           filters:
             branches:
               only:
