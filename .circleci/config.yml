@@ -37,7 +37,7 @@ jobs:
     executor: app-executor
     steps: 
       - checkout 
-      - Show-current-branch-name
+      - Show current branch
       - restore_cache
       - run: 
           name: Run unit test
