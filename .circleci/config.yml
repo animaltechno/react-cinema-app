@@ -37,8 +37,8 @@ jobs:
     executor: app-executor
     steps: 
       - checkout 
-      - *Show-current-branch
-      - *restore-cache
+      # - *Show-current-branch
+      # - *restore-cache
       - run: 
           name: Run unit test
           command: npm run test
