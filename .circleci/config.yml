@@ -11,6 +11,17 @@ executors:
       - image: 'cibuilds/base:latest'
     resource_class: small
 
+aliases:
+  - &show-current-branch-name
+    run:
+      name: Show current branch
+      command: echo ${CIRCLE_BRANCH}
+  - &restore-cache
+    restore_cache:
+      keys:
+        - app-{{ checksum "package.json" }}
+        - app-
+
 jobs:
   build:
     docker:
@@ -37,13 +48,8 @@ jobs:
     executor: app-executor
     steps: 
       - checkout 
-      - run:
-        name: Show current branch
-        command: echo ${CIRCLE_BRANCH}
-      - restore_cache:
-        keys:
-          - app-{‌{ checksum "package.json" }}
-          - app-
+      - *show-current-branch-name
+      - *restore-cache
       - run: 
           name: Run unit test
           command: npm run test
